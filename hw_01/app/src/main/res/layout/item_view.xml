@@ -14,8 +14,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintDimensionRatio="1,1"
-        android:background="@color/black"/>
+        app:layout_constraintDimensionRatio="1,1"/>
 
     <TextView
         android:id="@+id/text_1"
