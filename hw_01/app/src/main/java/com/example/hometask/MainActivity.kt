@@ -29,7 +29,7 @@ class MainActivity: AppCompatActivity() {
         }
         else {
             val temp = mutableListOf<Int>()
-            for (i in 0..<savedInstanceState.getInt("count")) {
+            for (i in 0..<savedInstanceState.getInt("itemsCount")) {
                 temp.add(i + 1)
             }
             adapter.setItems(temp)
@@ -38,6 +38,6 @@ class MainActivity: AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putInt("count", adapter.itemCount)
+        outState.putInt("itemsCount", adapter.itemCount)
     }
 }
