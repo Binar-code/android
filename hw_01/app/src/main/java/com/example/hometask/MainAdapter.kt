@@ -17,6 +17,17 @@ class MainAdapter(): RecyclerView.Adapter<MainViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: MainViewHolder, position: Int) {
-        holder.
+        holder.bind(items[position])
+    }
+
+    fun setItems(list: List<Int>) {
+        items.clear()
+        items.addAll(list)
+        notifyDataSetChanged()
+    }
+
+    fun addItems(item: Int) {
+        items.add(item)
+        notifyDataSetChanged()
     }
 }
