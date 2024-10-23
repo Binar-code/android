@@ -43,16 +43,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-fun getColor(n: Int): Color {
-    return if (n % 2 == 0) {
-        Color.Red
-    }
-    else {
-        Color.Blue
-    }
-}
-
-
 @Composable
 fun plate(dataSize: Int): Int {
     val size = remember { mutableIntStateOf(dataSize) }
@@ -77,7 +67,7 @@ fun plate(dataSize: Int): Int {
                         .padding(10.dp)
                         .fillMaxWidth()
                         .aspectRatio(1f)
-                        .background(getColor(it.toInt()))
+                        .background(if (it.toInt() % 2 == 0) Color.Red else Color.Blue)
                 ) {
                     Text(text = it)
                 }
