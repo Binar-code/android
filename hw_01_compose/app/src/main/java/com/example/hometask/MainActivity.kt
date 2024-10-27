@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -65,7 +64,6 @@ fun panels(initialData: List<String>): MutableList<String> {
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .padding(10.dp)
-                        .fillMaxWidth()
                         .aspectRatio(1f)
                         .background(if (index % 2 == 0) Color.Red else Color.Blue)
                 ) {
@@ -74,7 +72,7 @@ fun panels(initialData: List<String>): MutableList<String> {
             }
         }
 
-        Box(contentAlignment = Alignment.BottomCenter) {
+        Box(contentAlignment = Alignment.Center) {
             Button(onClick = { data.add("${data.size + 1}") }) {
                 Text(text = "Добавить панель")
             }
