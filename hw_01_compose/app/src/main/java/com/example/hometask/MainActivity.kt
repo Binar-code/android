@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,16 +60,16 @@ fun panels(initialData: List<String>): MutableList<String> {
             columns = GridCells.Fixed(columns),
             modifier = Modifier.weight(1f)
         ) {
-            items(data) {
+            itemsIndexed(data) { index, item ->
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .padding(10.dp)
                         .fillMaxWidth()
                         .aspectRatio(1f)
-                        .background(if (it.toInt() % 2 == 0) Color.Red else Color.Blue)
+                        .background(if (index % 2 == 0) Color.Red else Color.Blue)
                 ) {
-                    Text(text = it)
+                    Text(text = item)
                 }
             }
         }
