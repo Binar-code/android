@@ -17,7 +17,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,29 +26,29 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 
 class MainActivity : ComponentActivity() {
-    private var dataSize: Int = 0
+    private var size: Int = 0
+    private lateinit var data: MutableList<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        dataSize = savedInstanceState?.getInt("size") ?: 0
-
         super.onCreate(savedInstanceState)
         setContent {
-            dataSize = plate(dataSize)
+            size = savedInstanceState?.getInt("size") ?: 0
+            data = MutableList(size) { "${it + 1}" }
+            data = panels(data)
         }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putInt("size", dataSize)
+        outState.putInt("size", data.size)
     }
 }
 
 @Composable
-fun plate(dataSize: Int): Int {
-    val size = remember { mutableIntStateOf(dataSize) }
-    val data = List(size.intValue) { "${it + 1}" }
+fun panels(initialData: List<String>): MutableList<String> {
     val isPortrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
     val columns = if (isPortrait) 3 else 4
+    val data = remember { mutableStateListOf(*initialData.toTypedArray()) }
 
     Column(
         modifier = Modifier
@@ -75,10 +75,11 @@ fun plate(dataSize: Int): Int {
         }
 
         Box(contentAlignment = Alignment.BottomCenter) {
-            Button(onClick = { size.intValue += 1 }) {
+            Button(onClick = { data.add("${data.size + 1}") }) {
                 Text(text = "Добавить панель")
             }
         }
     }
-    return size.intValue
+
+    return data
 }
