@@ -56,6 +56,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
+// TODO: разделить по файлам
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -145,6 +147,8 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
     }
 }
 
+
+// TODO: разделить ошибки лимита апи и ошибки сети
 class GifViewModel : ViewModel() {
     val gifs = mutableStateListOf<String>()
     var requestError = mutableIntStateOf(0)
