@@ -1,30 +1,37 @@
 package com.example.hw_02
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.DefaultStrokeLineWidth
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -47,33 +54,94 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisplayImages(vm: GifViewModel = viewModel()) {
-    LazyColumn {
-        items(vm.gifs) { url ->
-            GlideImage(
-                imageModel = { url }
-            )
+    val gridState = rememberLazyStaggeredGridState()
+    val showAlert by remember { vm.requestError }
+
+    if (showAlert == 1) {
+        BasicAlertDialog(
+            onDismissRequest = { vm.getGif() },
+        ) {
+            Surface(
+                modifier = Modifier.wrapContentWidth().wrapContentHeight(),
+                shape = MaterialTheme.shapes.large,
+                tonalElevation = AlertDialogDefaults.TonalElevation
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Ошибка получения изображения",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    Button(
+                        onClick = { vm.getGif() },
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Text("Повторить")
+                    }
+                }
+            }
         }
+    }
+
+    LazyVerticalStaggeredGrid(
+        columns = StaggeredGridCells.Fixed(3),
+        verticalItemSpacing = 4.dp,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        content = {
+            items(vm.gifs) { gif ->
+                GlideImage(
+                    imageModel = { gif }
+                )
+            }
+        },
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 45.dp, start = 4.dp, end = 4.dp),
+        state = gridState
+    )
+
+    LaunchedEffect(gridState) {
+        snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .collect { lastVisibleItemIndex ->
+                if (lastVisibleItemIndex == vm.gifs.size - 1 && !vm.isLoading) {
+                    vm.getGif()
+                }
+            }
     }
 }
 
 class GifViewModel : ViewModel() {
     val gifs = mutableStateListOf<String>()
+    var requestError = mutableIntStateOf(0)
+    var isLoading = false
 
     init {
         getGif()
     }
 
     fun getGif() {
-        viewModelScope.launch {
-            val request = NetworkService.api.getRandomGif(
-                "whqMjOPYTj8KZ0JCLoqhN8biPEaWiiNx",
-                "dogs"
-            )
+        if (isLoading) return
 
-            gifs.add(request.data.images.original.url)
-            Log.d("NETWORK", "${request.data.images.original.url}")
+        isLoading = true
+        viewModelScope.launch {
+            requestError.intValue = 0
+            try {
+                for (i in 1..3) {
+                    val request = NetworkService.api.getRandomGif(
+                        "BISJs3DxO7gO4XAS5DwgE50rxUKYSsWc",
+                        "cats"
+                    )
+                    gifs.add(request.data.images.original.url)
+                }
+            } catch (e: HttpException) {
+                requestError.intValue = 1
+            } finally {
+                isLoading = false
+            }
         }
     }
 }
