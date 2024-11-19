@@ -8,9 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -19,7 +17,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
@@ -38,10 +35,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -73,9 +66,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DisplayImages(vm: GifViewModel = viewModel()) {
     val gridState = rememberLazyStaggeredGridState()
-    val showAlert by remember { vm.requestError }
+    val showHTTPAlert by remember { vm.requestError }
+    val showMaxRequestsAlert by remember { vm.maxRequests }
 
-    if (showAlert == 1) {
+    if (showHTTPAlert) {
         BasicAlertDialog(
             onDismissRequest = { vm.getGif() },
         ) {
@@ -84,6 +78,7 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
                 shape = MaterialTheme.shapes.large,
                 tonalElevation = AlertDialogDefaults.TonalElevation
             ) {
+                // TODO: сообщения об ошибках вынести в ресурсы
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = "Ошибка получения изображения",
@@ -100,6 +95,35 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
             }
         }
     }
+
+    // TODO: алерт должен пропадать
+    if (showMaxRequestsAlert) {
+        BasicAlertDialog(
+            onDismissRequest = {  },
+        ) {
+            Surface(
+                modifier = Modifier.wrapContentWidth().wrapContentHeight(),
+                shape = MaterialTheme.shapes.large,
+                tonalElevation = AlertDialogDefaults.TonalElevation
+            ) {
+                // TODO: сообщения об ошибках вынести в ресурсы
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Достигнуто максимальное количество изображений",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    Button(
+                        onClick = { },
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Text("Ок")
+                    }
+                }
+            }
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Fixed(3),
@@ -151,8 +175,9 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
 // TODO: разделить ошибки лимита апи и ошибки сети
 class GifViewModel : ViewModel() {
     val gifs = mutableStateListOf<String>()
-    var requestError = mutableIntStateOf(0)
+    var requestError = mutableStateOf(false)
     var isLoading = mutableStateOf(false)
+    var maxRequests = mutableStateOf(false)
 
     init {
         getGif(true)
@@ -161,21 +186,30 @@ class GifViewModel : ViewModel() {
     fun getGif(firstLoad: Boolean = false) {
         if (isLoading.value) return
 
+        if (maxRequests.value) return
+
         isLoading.value = true
         viewModelScope.launch {
-            requestError.intValue = 0
+            requestError.value = false
             try {
-                val repeats = if (firstLoad) 15 else 3
+                val repeats = if (firstLoad) 20 else 3
                 for (i in 1..repeats) {
                     val request = NetworkService.api.getRandomGif(
                         // TODO: безопасное хранение ключа
-                        "1lokDqRZBU1cEODz6yO1dmEJl6k2jtmE",
+                        "BISJs3DxO7gO4XAS5DwgE50rxUKYSsWc",
                         "cats"
                     )
                     gifs.add(request.data.images.original.url)
                 }
             } catch (e: HttpException) {
-                requestError.intValue = 1
+                // TODO: код вынести в ресурсы
+                if (e.code() == 429) {
+                    maxRequests.value = true
+                } else {
+                    requestError.value = true
+                }
+            } catch (e: Exception) {
+                requestError.value = true
             } finally {
                 isLoading.value = false
             }
