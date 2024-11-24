@@ -142,6 +142,7 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
                                     .width((gif.width / LocalDensity.current.density).dp)
                                     .height((gif.height / LocalDensity.current.density).dp)
                                     .background(Color.Gray),
+                                    contentAlignment = Alignment.Center
                             ) {
                                 Text(text = stringResource(R.string.img_err))
                             }
