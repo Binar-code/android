@@ -1,16 +1,15 @@
-package com.example.hw_02
+package com.example.hw_02.presentation
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -28,38 +27,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
+import com.example.hw_02.R
 import com.skydoves.landscapist.glide.GlideImage
-import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Query
-
-// TODO: разделить по файлам
-
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            DisplayImages()
-        }
-    }
-}
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestBuilder
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +50,16 @@ class MainActivity : ComponentActivity() {
 fun DisplayImages(vm: GifViewModel = viewModel()) {
     val gridState = rememberLazyStaggeredGridState()
     val showHTTPAlert by remember { vm.requestError }
-    val showMaxRequestsAlert by remember { vm.maxRequests }
+    val maxRequests by remember { vm.maxRequests }
+    val maxRequestsAlert by remember { vm.maxRequestsAlert }
+
+    val context = LocalContext.current
+    val apiKey = remember { context.getString(R.string.api_key) }
+
+    LaunchedEffect(apiKey) {
+        vm.setKey(apiKey)
+        vm.getGif()
+    }
 
     if (showHTTPAlert) {
         BasicAlertDialog(
@@ -78,10 +70,9 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
                 shape = MaterialTheme.shapes.large,
                 tonalElevation = AlertDialogDefaults.TonalElevation
             ) {
-                // TODO: сообщения об ошибках вынести в ресурсы
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Ошибка получения изображения",
+                        text = stringResource(R.string.api_request_err),
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -89,15 +80,14 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
                         onClick = { vm.getGif() },
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
-                        Text("Повторить")
+                        Text(stringResource(R.string.retry_msg))
                     }
                 }
             }
         }
     }
 
-    // TODO: алерт должен пропадать
-    if (showMaxRequestsAlert) {
+    if (maxRequests && !maxRequestsAlert) {
         BasicAlertDialog(
             onDismissRequest = {  },
         ) {
@@ -106,18 +96,17 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
                 shape = MaterialTheme.shapes.large,
                 tonalElevation = AlertDialogDefaults.TonalElevation
             ) {
-                // TODO: сообщения об ошибках вынести в ресурсы
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Достигнуто максимальное количество изображений",
+                        text = stringResource(R.string.api_limit_err),
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
                     Button(
-                        onClick = { },
+                        onClick = { vm.maxRequestsAlert.value = true },
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
-                        Text("Ок")
+                        Text(stringResource(R.string.ok_msg))
                     }
                 }
             }
@@ -132,10 +121,11 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
             content = {
                 items(vm.gifs) { gif ->
                     GlideImage(
-                        imageModel = { gif },
-                        requestOptions = {
-                            RequestOptions().diskCacheStrategy(DiskCacheStrategy.ALL)
-                        }
+                        imageModel = { gif.webp },
+                        previewPlaceholder = painterResource(R.drawable.placeholder),
+                        modifier = Modifier
+                            .width((gif.width / LocalDensity.current.density).dp)
+                            .height((gif.height / LocalDensity.current.density).dp)
                     )
                 }
             },
@@ -144,7 +134,7 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
                 .padding(top = 45.dp, start = 4.dp, end = 4.dp),
             state = gridState
         )
-        // TODO: крутилка без мигания
+
         if (vm.isLoading.value) {
             Box(
                 modifier = Modifier
@@ -164,92 +154,13 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
     LaunchedEffect(gridState) {
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
             .collect { lastVisibleItemIndex ->
-                if (lastVisibleItemIndex == vm.gifs.size - 1 && !vm.isLoading.value) {
+                if (lastVisibleItemIndex == vm.gifs.size - 1
+                    && !vm.isLoading.value
+                    && !vm.maxRequests.value
+                    && vm.canLoad()
+                ) {
                     vm.getGif()
                 }
             }
-    }
-}
-
-
-// TODO: разделить ошибки лимита апи и ошибки сети
-class GifViewModel : ViewModel() {
-    val gifs = mutableStateListOf<String>()
-    var requestError = mutableStateOf(false)
-    var isLoading = mutableStateOf(false)
-    var maxRequests = mutableStateOf(false)
-
-    init {
-        getGif(true)
-    }
-
-    fun getGif(firstLoad: Boolean = false) {
-        if (isLoading.value) return
-
-        if (maxRequests.value) return
-
-        isLoading.value = true
-        viewModelScope.launch {
-            requestError.value = false
-            try {
-                val repeats = if (firstLoad) 20 else 3
-                for (i in 1..repeats) {
-                    val request = NetworkService.api.getRandomGif(
-                        // TODO: безопасное хранение ключа
-                        "BISJs3DxO7gO4XAS5DwgE50rxUKYSsWc",
-                        "cats"
-                    )
-                    gifs.add(request.data.images.original.url)
-                }
-            } catch (e: HttpException) {
-                // TODO: код вынести в ресурсы
-                if (e.code() == 429) {
-                    maxRequests.value = true
-                } else {
-                    requestError.value = true
-                }
-            } catch (e: Exception) {
-                requestError.value = true
-            } finally {
-                isLoading.value = false
-            }
-        }
-    }
-}
-
-data class GiphyResponse(
-    val data: GifData
-)
-
-data class GifData(
-    val images: GifImages
-)
-
-data class GifImages(
-    val original: GifDetails
-)
-
-data class GifDetails(
-    val url: String
-)
-
-interface GiphyApi {
-    @GET("v1/gifs/random")
-
-    suspend fun getRandomGif(
-        @Query("api_key") apiKey: String,
-        @Query("tag") tag: String
-    ): GiphyResponse
-}
-
-object NetworkService {
-    private const val BASE_URL = "https://api.giphy.com/"
-
-    val api: GiphyApi by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(GiphyApi::class.java)
     }
 }

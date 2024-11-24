@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">hw_02</string>
-    <string name="api_key">t3fRPLBycgDQvxbkc9L10BPRe7Q98VpC</string>
+    <string name="api_limit_err">Достигнуто максимальное количество изображений</string>
+    <string name="api_request_err">Ошибка получения изображения</string>
+    <string name="api_key">1lokDqRZBU1cEODz6yO1dmEJl6k2jtmE</string>
+    <string name="ok_msg">OK</string>
+    <string name="retry_msg">Повторить</string>
 </resources>

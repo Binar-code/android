@@ -5,6 +5,9 @@ pluginManagement {
                 includeGroupByRegex("com\\.android.*")
                 includeGroupByRegex("com\\.google.*")
                 includeGroupByRegex("androidx.*")
+                google()
+                mavenCentral()
+                maven { url = uri("https://jitpack.io") }
             }
         }
         mavenCentral()
@@ -21,4 +24,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "hw_02"
 include(":app")
- 
