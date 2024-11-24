@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -125,7 +126,30 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
                         previewPlaceholder = painterResource(R.drawable.placeholder),
                         modifier = Modifier
                             .width((gif.width / LocalDensity.current.density).dp)
-                            .height((gif.height / LocalDensity.current.density).dp)
+                            .height((gif.height / LocalDensity.current.density).dp),
+                        loading = {
+                            Box(
+                                modifier = Modifier
+                                    .width((gif.width / LocalDensity.current.density).dp)
+                                    .height((gif.height / LocalDensity.current.density).dp)
+                                    .background(Color.Gray),
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        },
+                        failure = {
+                            Box(
+                                modifier = Modifier
+                                    .width((gif.width / LocalDensity.current.density).dp)
+                                    .height((gif.height / LocalDensity.current.density).dp)
+                                    .background(Color.Gray),
+                            ) {
+                                Text(text = stringResource(R.string.img_err))
+                            }
+                        }
                     )
                 }
             },
