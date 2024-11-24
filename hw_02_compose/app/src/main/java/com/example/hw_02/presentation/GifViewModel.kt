@@ -1,12 +1,10 @@
 package com.example.hw_02.presentation
 
-import android.util.Log
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.hw_02.R
 import com.example.hw_02.api.NetworkService
 import com.example.hw_02.api.models.GifDetails
 import kotlinx.coroutines.launch
@@ -30,7 +28,6 @@ class GifViewModel : ViewModel() {
     fun canLoad(): Boolean = total.intValue == 0 || gifs.size < total.intValue
 
     fun getGif() {
-        Log.d("KEY", "$key")
         if (isLoading.value || maxRequests.value) return
 
         isLoading.value = true
