@@ -128,6 +128,7 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
                                     .width((gif.width / LocalDensity.current.density).dp)
                                     .height((gif.height / LocalDensity.current.density).dp)
                                     .background(Color.Gray),
+                                contentAlignment = Alignment.Center
                             ) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(24.dp),
