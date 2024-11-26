@@ -1,6 +1,7 @@
 package com.example.hw_02.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -116,43 +119,51 @@ fun DisplayImages(vm: GifViewModel = viewModel()) {
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             content = {
                 items(vm.gifs) { gif ->
-                    GlideImage(
-                        imageModel = { gif.webp },
-                        previewPlaceholder = painterResource(R.drawable.placeholder),
-                        modifier = Modifier
-                            .width((gif.width / LocalDensity.current.density).dp)
-                            .height((gif.height / LocalDensity.current.density).dp),
-                        loading = {
-                            Box(
-                                modifier = Modifier
-                                    .width((gif.width / LocalDensity.current.density).dp)
-                                    .height((gif.height / LocalDensity.current.density).dp)
-                                    .background(Color.Gray),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        },
-                        failure = {
-                            Box(
-                                modifier = Modifier
-                                    .width((gif.width / LocalDensity.current.density).dp)
-                                    .height((gif.height / LocalDensity.current.density).dp)
-                                    .background(Color.Gray),
+                    val reload = remember { mutableStateOf(false) }
+                    key (reload.value) {
+                        GlideImage(
+                            imageModel = {
+                                gif.webp
+                            },
+                            previewPlaceholder = painterResource(R.drawable.placeholder),
+                            modifier = Modifier
+                                .width((gif.width / LocalDensity.current.density).dp)
+                                .height((gif.height / LocalDensity.current.density).dp),
+                            loading = {
+                                Box(
+                                    modifier = Modifier
+                                        .width((gif.width / LocalDensity.current.density).dp)
+                                        .height((gif.height / LocalDensity.current.density).dp)
+                                        .background(Color.Gray),
                                     contentAlignment = Alignment.Center
-                            ) {
-                                Text(text = stringResource(R.string.img_err))
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            },
+                            failure = {
+                                Box(
+                                    modifier = Modifier
+                                        .width((gif.width / LocalDensity.current.density).dp)
+                                        .height((gif.height / LocalDensity.current.density).dp)
+                                        .background(Color.Gray)
+                                        .clickable {
+                                            reload.value = true
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(text = stringResource(R.string.img_err))
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             },
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 45.dp, start = 4.dp, end = 4.dp),
+                .padding(top = 45.dp, start = 4.dp, end = 4.dp, bottom = 10.dp),
             state = gridState
         )
 
